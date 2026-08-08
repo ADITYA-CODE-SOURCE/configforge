@@ -1,0 +1,13 @@
+version: v1
+security:
+  routes:
+    - name: bad-route
+      path: api/payments
+      methods:
+        - FETCH
+      require_authentication: true
+      allowed_roles:
+        - ""
+      rate_limit:
+        requests: 0
+        window: 0s

@@ -1,0 +1,5 @@
+version: v1
+privacy:
+  redact_headers:
+    - Authorization
+    - authorization

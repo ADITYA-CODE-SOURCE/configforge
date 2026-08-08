@@ -1,0 +1,16 @@
+name: route-security
+version: v1
+description: Controls HTTP route authentication, authorization, and rate limits.
+
+options:
+  requests:
+    type: integer
+    minimum: 1
+    default: 100
+    env: CONFIGFORGE_DEFAULT_RATE_LIMIT_REQUESTS
+    description: Maximum requests allowed during the configured window.
+  window:
+    type: duration
+    default: 1m
+    env: CONFIGFORGE_DEFAULT_RATE_LIMIT_WINDOW
+    description: Rate-limit evaluation window.

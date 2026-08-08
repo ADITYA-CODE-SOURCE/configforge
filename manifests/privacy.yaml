@@ -1,0 +1,21 @@
+name: privacy
+version: v1
+description: Controls sensitive data redaction rules.
+
+options:
+  redact_headers:
+    type: string_array
+    default:
+      - authorization
+      - cookie
+      - x-api-key
+    env: CONFIGFORGE_REDACT_HEADERS
+    description: HTTP headers to redact case-insensitively.
+  redact_query_parameters:
+    type: string_array
+    default:
+      - password
+      - token
+      - api_key
+    env: CONFIGFORGE_REDACT_QUERY_PARAMETERS
+    description: URL query parameters to redact.

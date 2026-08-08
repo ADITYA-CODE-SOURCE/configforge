@@ -1,0 +1,51 @@
+version: v1
+
+features:
+  new_checkout:
+    enabled: true
+    rollout_percentage: 25
+    conditions:
+      countries:
+        - IN
+        - US
+      users:
+        - user-101
+        - user-205
+
+security:
+  routes:
+    - name: create-payment
+      path: /api/payments/*
+      methods:
+        - POST
+      require_authentication: true
+      allowed_roles:
+        - admin
+        - customer
+      rate_limit:
+        requests: 100
+        window: 1m
+
+    - name: public-health
+      path: /health
+      methods:
+        - GET
+      require_authentication: false
+
+privacy:
+  redact_headers:
+    - authorization
+    - cookie
+    - x-api-key
+  redact_query_parameters:
+    - password
+    - token
+    - api_key
+  redact_json_fields:
+    - password
+    - access_token
+    - credit_card.number
+
+logging:
+  level: info
+  include_request_id: true

@@ -1,0 +1,11 @@
+name: feature-flags
+version: v1
+description: Controls declarative feature flags and targeting conditions.
+
+options:
+  rollout_percentage:
+    type: integer
+    minimum: 0
+    maximum: 100
+    default: 0
+    description: Percentage of matching users that receive a feature.

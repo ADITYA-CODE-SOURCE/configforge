@@ -1,0 +1,5 @@
+version: v1
+features:
+  checkout:
+    enabled: true
+    rollout_percentage: 101
