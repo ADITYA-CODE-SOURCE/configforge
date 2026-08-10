@@ -49,7 +49,13 @@ func Validate(cfg Config, filename string, positions map[string]Position) error 
 }
 
 func validateFeatures(cfg Config, filename string, positions map[string]Position, errs []FieldError) []FieldError {
-	for name, flag := range cfg.Features {
+	names := make([]string, 0, len(cfg.Features))
+	for name := range cfg.Features {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		flag := cfg.Features[name]
 		featurePath := "features." + name
 		if strings.TrimSpace(name) == "" {
 			errs = appendFieldError(errs, filename, positions, featurePath, "name must be non-empty")

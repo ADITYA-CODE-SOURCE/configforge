@@ -89,6 +89,17 @@ func ParseDuration(value string) (Duration, error) {
 	return Duration{Duration: parsed}, nil
 }
 
+// MustDuration is a convenience helper for tests and defaults that panics on
+// invalid input. Production callers should use ParseDuration and handle the
+// error.
+func MustDuration(value string) Duration {
+	d, err := ParseDuration(value)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
+
 // UnmarshalYAML decodes a Go duration string from YAML.
 func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
 	var raw string
