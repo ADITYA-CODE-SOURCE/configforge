@@ -2,15 +2,8 @@ version: v1
 
 features:
   new_checkout:
-    enabled: true
-    rollout_percentage: 25
-    conditions:
-      countries:
-        - IN
-        - US
-      users:
-        - user-101
-        - user-205
+    enabled: false
+    rollout_percentage: 0
 
 security:
   routes:
@@ -21,10 +14,16 @@ security:
       require_authentication: false
 
     - name: api-products
-      path: /api/products
+      path: /api/products/*
       methods:
         - GET
-      require_authentication: false
+      require_authentication: true
+      allowed_roles:
+        - customer
+        - admin
+      rate_limit:
+        requests: 50
+        window: 1m
 
     - name: create-payment
       path: /api/payments/*
@@ -32,10 +31,10 @@ security:
         - POST
       require_authentication: true
       allowed_roles:
-        - admin
         - customer
+        - admin
       rate_limit:
-        requests: 100
+        requests: 20
         window: 1m
 
     - name: admin-reports
@@ -45,21 +44,28 @@ security:
       require_authentication: true
       allowed_roles:
         - admin
+      rate_limit:
+        requests: 10
+        window: 1m
 
 privacy:
   redact_headers:
     - authorization
     - cookie
     - x-api-key
+    - x-forwarded-for
   redact_query_parameters:
     - password
     - token
     - api_key
+    - session
   redact_json_fields:
     - password
     - access_token
     - credit_card.number
+    - credit_card.cvv
+    - session_id
 
 logging:
-  level: info
+  level: warn
   include_request_id: true

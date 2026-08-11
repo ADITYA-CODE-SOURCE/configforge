@@ -3,14 +3,18 @@ version: v1
 features:
   new_checkout:
     enabled: true
-    rollout_percentage: 25
+    rollout_percentage: 100
     conditions:
       countries:
         - IN
         - US
-      users:
-        - user-101
-        - user-205
+
+  admin_dashboard:
+    enabled: true
+    rollout_percentage: 50
+    conditions:
+      roles:
+        - admin
 
 security:
   routes:
@@ -21,7 +25,7 @@ security:
       require_authentication: false
 
     - name: api-products
-      path: /api/products
+      path: /api/products/*
       methods:
         - GET
       require_authentication: false
@@ -32,10 +36,10 @@ security:
         - POST
       require_authentication: true
       allowed_roles:
-        - admin
         - customer
+        - admin
       rate_limit:
-        requests: 100
+        requests: 200
         window: 1m
 
     - name: admin-reports
@@ -49,17 +53,11 @@ security:
 privacy:
   redact_headers:
     - authorization
-    - cookie
-    - x-api-key
   redact_query_parameters:
     - password
-    - token
-    - api_key
   redact_json_fields:
     - password
-    - access_token
-    - credit_card.number
 
 logging:
-  level: info
+  level: debug
   include_request_id: true

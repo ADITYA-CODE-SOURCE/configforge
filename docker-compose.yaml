@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      CONFIGFORGE_LOG_LEVEL: info
+      CONFIGFORGE_DEFAULT_RATE_LIMIT_REQUESTS: "100"
+      CONFIGFORGE_DEFAULT_RATE_LIMIT_WINDOW: "1m"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

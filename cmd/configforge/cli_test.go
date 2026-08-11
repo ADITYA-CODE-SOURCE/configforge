@@ -114,6 +114,92 @@ func TestCLIExplainUnknownPath(t *testing.T) {
 	}
 }
 
+func TestCLICheckFeatureEnabled(t *testing.T) {
+	result := runCLI(t, "check-feature",
+		"--config", filepath.Join("..", "..", "examples", "configs", "default.yaml"),
+		"--feature", "new_checkout",
+		"--user", "user-101",
+		"--country", "IN",
+	)
+	if result.exitCode != 0 {
+		t.Fatalf("exit = %d; stderr=%s", result.exitCode, result.stderr)
+	}
+	if !strings.Contains(result.stdout, "enabled=true") {
+		t.Fatalf("stdout = %q", result.stdout)
+	}
+}
+
+func TestCLICheckFeatureDisabled(t *testing.T) {
+	result := runCLI(t, "check-feature",
+		"--config", filepath.Join("..", "..", "testdata", "valid", "main.yaml"),
+		"--feature", "nonexistent",
+		"--user", "unknown-user",
+	)
+	if result.exitCode != 2 {
+		t.Fatalf("exit = %d, want 2 for denied feature; stdout=%s", result.exitCode, result.stdout)
+	}
+	if !strings.Contains(result.stdout, "enabled=false") {
+		t.Fatalf("stdout = %q", result.stdout)
+	}
+}
+
+func TestCLICheckRouteAllowed(t *testing.T) {
+	result := runCLI(t, "check-route",
+		"--config", filepath.Join("..", "..", "examples", "configs", "default.yaml"),
+		"--path", "/api/payments/create",
+		"--method", "POST",
+		"--authenticated",
+		"--role", "customer",
+	)
+	if result.exitCode != 0 {
+		t.Fatalf("exit = %d; stderr=%s", result.exitCode, result.stderr)
+	}
+	if !strings.Contains(result.stdout, "allowed=true") {
+		t.Fatalf("stdout = %q", result.stdout)
+	}
+	if !strings.Contains(result.stdout, "matched_policy=create-payment") {
+		t.Fatalf("stdout = %q", result.stdout)
+	}
+}
+
+func TestCLICheckRouteDenied(t *testing.T) {
+	result := runCLI(t, "check-route",
+		"--config", filepath.Join("..", "..", "examples", "configs", "default.yaml"),
+		"--path", "/api/payments/create",
+		"--method", "POST",
+	)
+	if result.exitCode != 2 {
+		t.Fatalf("exit = %d, want 2 for denied route; stdout=%s", result.exitCode, result.stdout)
+	}
+	if !strings.Contains(result.stdout, "allowed=false") {
+		t.Fatalf("stdout = %q", result.stdout)
+	}
+}
+
+func TestCLICheckFeatureMissingFlag(t *testing.T) {
+	result := runCLI(t, "check-feature",
+		"--config", filepath.Join("..", "..", "examples", "configs", "default.yaml"),
+	)
+	if result.exitCode == 0 {
+		t.Fatal("exit = 0, want non-zero")
+	}
+	if !strings.Contains(result.stderr, "--feature is required") {
+		t.Fatalf("stderr = %q", result.stderr)
+	}
+}
+
+func TestCLICheckRouteMissingFlag(t *testing.T) {
+	result := runCLI(t, "check-route",
+		"--config", filepath.Join("..", "..", "examples", "configs", "default.yaml"),
+	)
+	if result.exitCode == 0 {
+		t.Fatal("exit = 0, want non-zero")
+	}
+	if !strings.Contains(result.stderr, "--path is required") {
+		t.Fatalf("stderr = %q", result.stderr)
+	}
+}
+
 type cliResult struct {
 	stdout   string
 	stderr   string
@@ -134,6 +220,8 @@ func runCLI(t *testing.T, args ...string) cliResult {
 	root.AddCommand(generateCommand())
 	root.AddCommand(schemaCommand())
 	root.AddCommand(explainCommand())
+	root.AddCommand(checkFeatureCommand())
+	root.AddCommand(checkRouteCommand())
 
 	root.SetOut(&stdout)
 	root.SetErr(&stderr)
@@ -143,6 +231,9 @@ func runCLI(t *testing.T, args ...string) cliResult {
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
+		if err.Error() == "denied" {
+			exitCode = 2
+		}
 		_, _ = stderr.WriteString(err.Error() + "\n")
 	}
 	return cliResult{stdout: stdout.String(), stderr: stderr.String(), exitCode: exitCode}

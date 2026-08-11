@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,8 +11,12 @@ import (
 	"github.com/ADITYA-CODE-SOURCE/configforge/internal/manifest"
 	"github.com/ADITYA-CODE-SOURCE/configforge/internal/schema"
 	"github.com/ADITYA-CODE-SOURCE/configforge/pkg/config"
+	"github.com/ADITYA-CODE-SOURCE/configforge/pkg/engine"
+	"github.com/ADITYA-CODE-SOURCE/configforge/pkg/feature"
 	"github.com/spf13/cobra"
 )
+
+var errDenied = fmt.Errorf("denied")
 
 func main() {
 	root := &cobra.Command{
@@ -25,8 +30,13 @@ func main() {
 	root.AddCommand(generateCommand())
 	root.AddCommand(schemaCommand())
 	root.AddCommand(explainCommand())
+	root.AddCommand(checkFeatureCommand())
+	root.AddCommand(checkRouteCommand())
 
 	if err := root.Execute(); err != nil {
+		if errors.Is(err, errDenied) {
+			os.Exit(2)
+		}
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -243,4 +253,113 @@ func explain(cfg config.Config, path string) string {
 		}
 	}
 	return fmt.Sprintf("%s: unknown configuration option", path)
+}
+
+func checkFeatureCommand() *cobra.Command {
+	var configPath, featureName, userID, country string
+	var roles []string
+
+	cmd := &cobra.Command{
+		Use:   "check-feature --config config.yaml --feature new_checkout --user user-101 --country IN",
+		Short: "Evaluate a feature flag for a given user context",
+		Example: `configforge check-feature --config config.yaml \
+  --feature new_checkout --user user-101 --country IN`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if configPath == "" {
+				return fmt.Errorf("--config is required")
+			}
+			if featureName == "" {
+				return fmt.Errorf("--feature is required")
+			}
+
+			cfg, err := config.LoadFile(configPath)
+			if err != nil {
+				return err
+			}
+			e, err := engine.Compile(*cfg)
+			if err != nil {
+				return err
+			}
+
+			ctx := feature.EvaluationContext{
+				UserID:  userID,
+				Country: country,
+				Roles:   roles,
+			}
+			dec := e.EvaluateFeature(featureName, ctx)
+
+			fmt.Fprintf(cmd.OutOrStdout(), "enabled=%t\n", dec.Enabled)
+			fmt.Fprintf(cmd.OutOrStdout(), "reason=%s\n", dec.Reason)
+			fmt.Fprintf(cmd.OutOrStdout(), "rule=%s\n", dec.Rule)
+
+			if !dec.Enabled {
+				return errDenied
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&configPath, "config", "", "Path to the YAML configuration file")
+	cmd.Flags().StringVar(&featureName, "feature", "", "Feature flag name to evaluate")
+	cmd.Flags().StringVar(&userID, "user", "", "User ID for evaluation context")
+	cmd.Flags().StringVar(&country, "country", "", "Country code for evaluation context")
+	cmd.Flags().StringSliceVar(&roles, "role", nil, "Roles for evaluation context (repeatable)")
+	return cmd
+}
+
+func checkRouteCommand() *cobra.Command {
+	var configPath, path, method string
+	var authenticated bool
+	var roles []string
+
+	cmd := &cobra.Command{
+		Use:   "check-route --config config.yaml --path /api/payments/create --method POST --authenticated --role customer",
+		Short: "Evaluate a route policy for a given request",
+		Example: `configforge check-route --config config.yaml \
+  --path /api/payments/create --method POST --authenticated --role customer`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if configPath == "" {
+				return fmt.Errorf("--config is required")
+			}
+			if path == "" {
+				return fmt.Errorf("--path is required")
+			}
+			if method == "" {
+				return fmt.Errorf("--method is required")
+			}
+
+			cfg, err := config.LoadFile(configPath)
+			if err != nil {
+				return err
+			}
+			e, err := engine.Compile(*cfg)
+			if err != nil {
+				return err
+			}
+
+			req := engine.Request{
+				Method:        method,
+				Path:          path,
+				Authenticated: authenticated,
+				Roles:         roles,
+			}
+			dec := e.EvaluateRequest(req)
+
+			fmt.Fprintf(cmd.OutOrStdout(), "allowed=%t\n", dec.Allowed)
+			fmt.Fprintf(cmd.OutOrStdout(), "reason=%s\n", dec.Reason)
+			fmt.Fprintf(cmd.OutOrStdout(), "matched_policy=%s\n", dec.MatchedPolicy)
+
+			if !dec.Allowed {
+				return errDenied
+			}
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&configPath, "config", "", "Path to the YAML configuration file")
+	cmd.Flags().StringVar(&path, "path", "", "Request path to evaluate")
+	cmd.Flags().StringVar(&method, "method", "", "HTTP method to evaluate")
+	cmd.Flags().BoolVar(&authenticated, "authenticated", false, "Whether the request is authenticated")
+	cmd.Flags().StringSliceVar(&roles, "role", nil, "Roles for the request (repeatable)")
+	return cmd
 }

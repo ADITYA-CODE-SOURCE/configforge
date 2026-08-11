@@ -40,6 +40,17 @@ This repository is being built phase by phase as an open-source developer projec
 - Schema structural tests proving valid configs are accepted and invalid configs are rejected.
 - Generation is deterministic: running `configforge generate` twice produces no diff.
 
+### Phase 4 — CLI and Example (complete)
+
+- CLI commands: `check-feature` and `check-route` with exit codes (0=allowed, 1=error, 2=denied).
+- Runnable example HTTP API with routes: `GET /health`, `GET /api/products`, `POST /api/payments/create`, `GET /api/admin/reports`.
+- Demonstrates public, authenticated customer, admin-only, rate-limited, and feature-controlled routes.
+- Query-parameter and header redaction in live requests.
+- Request-ID generation on all responses.
+- Three example configurations: `default.yaml`, `privacy-focused.yaml`, `development.yaml`.
+- Dockerfile (multi-stage, non-root) and `docker-compose.yaml` with health check.
+- CLI tests with exit code verification and HTTP integration tests covering auth, roles, rate limiting, and redaction.
+
 ## Quick Start
 
 ```bash
@@ -57,6 +68,43 @@ go run ./cmd/configforge schema --output schemas/config.schema.json
 
 # Explain a configuration option
 go run ./cmd/configforge explain features.new_checkout --config examples/configs/default.yaml
+
+# Check a feature flag
+go run ./cmd/configforge check-feature --config examples/configs/default.yaml \
+  --feature new_checkout --user user-101 --country IN
+
+# Check a route policy
+go run ./cmd/configforge check-route --config examples/configs/default.yaml \
+  --path /api/payments/create --method POST --authenticated --role customer
+```
+
+## Example API
+
+```bash
+# Run the example API locally
+go run ./examples/basic-api --config examples/configs/default.yaml
+
+# Or via Docker
+docker compose up --build
+```
+
+Example API endpoints:
+
+```bash
+# Public health check
+curl http://localhost:8080/health
+
+# Products (public)
+curl http://localhost:8080/api/products
+
+# Create payment (auth required, customer role)
+curl -X POST http://localhost:8080/api/payments/create \
+  -H "X-User-ID: user1" -H "X-Roles: customer" \
+  -d '{"amount": 100}'
+
+# Admin reports (admin role only)
+curl -H "X-User-ID: admin1" -H "X-Roles: admin" \
+  http://localhost:8080/api/admin/reports
 ```
 
 ## Library Integration
@@ -140,15 +188,13 @@ go vet ./...
 
 ## Project Limitations
 
-- Phase 4 (remaining CLI commands `check-feature`/`check-route`, example API, Docker) is not yet implemented.
 - Phase 5 (GitHub Actions CI, lint config, coverage artifact) is not yet implemented.
 - `golangci-lint` is referenced by the Makefile/CI plan but is not yet installed in all environments.
 - The rate limiter is in-memory only; a Redis backend can be added via the `RateLimitStorage` interface.
-- The demonstration identity adapter is not a security boundary.
+- The demonstration identity adapter reads `X-User-ID`/`X-Roles` headers and is not a security boundary.
 
 ## Roadmap
 
-- Phase 4: remaining CLI commands (`check-feature`, `check-route`), runnable example HTTP API, Docker/Compose.
 - Phase 5: GitHub Actions CI, lint configuration, fuzz harnesses, coverage reporting.
 
 ## Contributing
