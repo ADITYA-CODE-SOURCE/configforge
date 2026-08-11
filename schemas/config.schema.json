@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "conditions": {
+      "additionalProperties": false,
+      "description": "Feature targeting conditions.",
+      "properties": {
+        "countries": {
+          "description": "Countries that receive the feature (ISO codes).",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "roles": {
+          "description": "Roles that receive the feature.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "users": {
+          "description": "Explicitly targeted user IDs.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "featureFlag": {
+      "additionalProperties": false,
+      "description": "A named feature flag with targeting conditions and rollout.",
+      "properties": {
+        "conditions": {
+          "$ref": "#/$defs/conditions"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Whether the feature is enabled at all.",
+          "type": "boolean"
+        },
+        "rollout_percentage": {
+          "default": 0,
+          "description": "Percentage of users that receive the feature, using stable hashing.",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "rateLimit": {
+      "additionalProperties": false,
+      "description": "Fixed-window rate limit policy.",
+      "properties": {
+        "requests": {
+          "default": 100,
+          "description": "Maximum requests during the window.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "window": {
+          "description": "Go duration string for the window, e.g. 1m.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requests",
+        "window"
+      ],
+      "type": "object"
+    },
+    "routePolicy": {
+      "additionalProperties": false,
+      "description": "Authentication, authorization, and rate-limit policy for an HTTP route.",
+      "properties": {
+        "allowed_roles": {
+          "description": "Roles allowed to access this route when authenticated.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "methods": {
+          "description": "HTTP methods allowed by this route.",
+          "items": {
+            "enum": [
+              "GET",
+              "PUT",
+              "POST",
+              "DELETE",
+              "PATCH",
+              "HEAD",
+              "OPTIONS",
+              "CONNECT",
+              "TRACE"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "name": {
+          "description": "Unique route name.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "path": {
+          "description": "Route path. Supports a single trailing /* wildcard.",
+          "pattern": "^/.*$",
+          "type": "string"
+        },
+        "rate_limit": {
+          "$ref": "#/$defs/rateLimit"
+        },
+        "require_authentication": {
+          "default": false,
+          "description": "Whether authentication is required.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "methods"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/ADITYA-CODE-SOURCE/configforge/schemas/config.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Declarative feature and policy configuration for ConfigForge.",
+  "properties": {
+    "features": {
+      "additionalProperties": {
+        "$ref": "#/$defs/featureFlag"
+      },
+      "description": "Feature flag declarations keyed by unique feature name.",
+      "type": "object"
+    },
+    "logging": {
+      "additionalProperties": false,
+      "description": "Logging configuration.",
+      "properties": {
+        "include_request_id": {
+          "default": true,
+          "description": "Whether to attach a request id to each request.",
+          "type": "boolean"
+        },
+        "level": {
+          "default": "info",
+          "description": "Log severity.",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "privacy": {
+      "additionalProperties": false,
+      "description": "Privacy and redaction rules.",
+      "properties": {
+        "redact_headers": {
+          "description": "HTTP headers to redact case-insensitively.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "redact_json_fields": {
+          "description": "Nested JSON fields to redact using dotted paths, e.g. credit_card.number.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "redact_query_parameters": {
+          "description": "URL query parameters to redact.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "replacement": {
+          "default": "[REDACTED]",
+          "description": "Value used to replace redacted data. Defaults to [REDACTED].",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "security": {
+      "additionalProperties": false,
+      "description": "HTTP route security policies.",
+      "properties": {
+        "routes": {
+          "description": "Route policies evaluated in declaration order.",
+          "items": {
+            "$ref": "#/$defs/routePolicy"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "version": {
+      "description": "Configuration schema version. Only v1 is supported.",
+      "enum": [
+        "v1"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "version"
+  ],
+  "title": "ConfigForge Configuration",
+  "type": "object"
+}
