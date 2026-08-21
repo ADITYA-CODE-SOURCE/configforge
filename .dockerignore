@@ -1,0 +1,10 @@
+# Docker ignore
+.git
+coverage.out
+*.md
+*.yaml
+*.json
+**/testdata/
+**/manifests/
+Dockerfile
+docker-compose.yaml

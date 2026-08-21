@@ -2,9 +2,19 @@
 
 ConfigForge is a declarative feature and policy engine for Go applications. It lets developers describe feature flags, API access rules, rate limits, and privacy/redaction policies with YAML configuration instead of hard-coding them.
 
-This repository is being built phase by phase as an open-source developer project. It should not yet be treated as production ready.
+This is an open-source developer project built phase by phase on GitHub. It is not yet production ready, but is suitable for showcasing engineering skills.
 
-> **Note:** This project is independent of OpenTelemetry and does not derive from `otelc` or any other project.
+## Highlights for reviewers
+
+- Strict YAML validation with field-path and line/column errors
+- Deterministic JSON Schema, Go code, and Markdown documentation generation from manifests
+- Immutable, concurrent-safe runtime engine with feature-flag evaluation and route-policy decisions
+- Concurrency-safe in-memory rate limiter with configurable windows
+- HTTP middleware: RequestID, Redaction, Security, RateLimit, DecisionLog
+- CLI commands: validate, generate, schema, explain, check-feature, check-route
+- Example API with auth, roles, rate limiting, and redaction
+- Dockerized deployment with non-root user
+- Fuzz testing and race-detected tests
 
 ## Status
 
@@ -186,12 +196,12 @@ go test -race ./...
 go vet ./...
 ```
 
-## Project Limitations
+## Production Notes
 
 - GitHub Actions CI (`.github/workflows/ci.yaml`) is implemented on `main`; see the workflow for fmt, vet, test, race, verify-generated, build, Docker, and coverage.
 - `golangci-lint` is referenced by the Makefile/CI plan; local invocation requires separate installation.
 - The rate limiter is in-memory only; a Redis backend can be added via the `RateLimitStorage` interface.
-- The demonstration identity adapter reads `X-User-ID`/`X-Roles` headers and is not a security boundary.
+- The demonstration identity adapter reads `X-User-ID`/`X-Roles` headers and is not a security boundary. Provide your own `middleware.IdentityFunc` for production.
 
 ## Roadmap
 

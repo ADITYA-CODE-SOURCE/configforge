@@ -208,6 +208,9 @@ func explain(cfg config.Config, path string) string {
 		if len(parts) == 2 {
 			return fmt.Sprintf("features.%s: enabled=%t rollout=%d%%", name, flag.Enabled, flag.RolloutPercentage)
 		}
+		if len(parts) < 3 {
+			return fmt.Sprintf("features.%s: has sub-options", name)
+		}
 		switch parts[2] {
 		case "enabled":
 			return fmt.Sprintf("%s: boolean, currently %t", path, flag.Enabled)
@@ -216,6 +219,9 @@ func explain(cfg config.Config, path string) string {
 		case "conditions":
 			if len(parts) == 3 {
 				return fmt.Sprintf("%s: targeting conditions (countries=%v users=%v roles=%v)", path, flag.Conditions.Countries, flag.Conditions.Users, flag.Conditions.Roles)
+			}
+			if len(parts) < 4 {
+				return fmt.Sprintf("%s: targeting conditions", path)
 			}
 			switch parts[3] {
 			case "countries":
@@ -234,6 +240,9 @@ func explain(cfg config.Config, path string) string {
 			return fmt.Sprintf("%s: see routes in configuration", path)
 		}
 	case "privacy":
+		if len(parts) < 2 {
+			return "privacy: configuration options"
+		}
 		switch parts[1] {
 		case "redact_headers":
 			return fmt.Sprintf("%s: %v (case-insensitive)", path, cfg.Privacy.RedactHeaders)
@@ -245,6 +254,9 @@ func explain(cfg config.Config, path string) string {
 			return fmt.Sprintf("%s: %q", path, cfg.Privacy.Replacement)
 		}
 	case "logging":
+		if len(parts) < 2 {
+			return "logging: configuration options"
+		}
 		switch parts[1] {
 		case "level":
 			return fmt.Sprintf("%s: %q (one of debug, info, warn, error)", path, cfg.Logging.Level)

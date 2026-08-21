@@ -1,0 +1,19 @@
+# Binaries
+configforge
+basic-api
+
+# Go coverage profiles
+coverage.out
+
+# OS specific
+.DS_Store
+*~
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary
+/tmp/*
