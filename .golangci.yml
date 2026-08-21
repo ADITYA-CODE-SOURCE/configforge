@@ -1,0 +1,23 @@
+linters:
+  enable:
+    - goconst
+    - gocritic
+    - gofmt
+    - govet
+    - staticcheck
+    - typecheck
+    - unused
+    - lll
+  fast:
+    enable-all: false
+    allow-parallel-tests: true
+
+issues:
+  exclude-rules:
+    - path: _test.go
+      text: "stutter"
+
+run:
+  timeout: 5m
+  tests: true
+  allow-parallel-runners: true

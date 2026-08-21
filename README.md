@@ -188,14 +188,14 @@ go vet ./...
 
 ## Project Limitations
 
-- Phase 5 (GitHub Actions CI, lint config, coverage artifact) is not yet implemented.
-- `golangci-lint` is referenced by the Makefile/CI plan but is not yet installed in all environments.
+- GitHub Actions CI (`.github/workflows/ci.yaml`) is implemented on `main`; see the workflow for fmt, vet, test, race, verify-generated, build, Docker, and coverage.
+- `golangci-lint` is referenced by the Makefile/CI plan; local invocation requires separate installation.
 - The rate limiter is in-memory only; a Redis backend can be added via the `RateLimitStorage` interface.
 - The demonstration identity adapter reads `X-User-ID`/`X-Roles` headers and is not a security boundary.
 
 ## Roadmap
 
-- Phase 5: GitHub Actions CI, lint configuration, fuzz harnesses, coverage reporting.
+- Phase 5: Completed — CI, lint, coverage, fuzz harnesses implemented.
 
 ## Contributing
 
